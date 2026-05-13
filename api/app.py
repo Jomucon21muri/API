@@ -24,4 +24,20 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # habilitar CORS
 CORS(app)
+"""
+# Autenticación y autorización
+@app.before_request
+def authenticate_key():
+    # Verificar la clave API en los encabezados de la solicitud
 
+# chekeo de las rutas 
+@app.route('/health')
+# Endpoint de salud para verificar que la API está funcionando
+
+# crear tablas de conexión a la base de datos
+with app.app_context():
+    db.create_all()
+
+# Inializar el servidor
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)"""
