@@ -1,0 +1,162 @@
+{
+  "name": "Reporte Diario Automatizado",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 23 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Cron Trigger - 23:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "notes": "Se ejecuta diariamente a las 23:00"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/reports/daily",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "headerAuth",
+        "options": {}
+      },
+      "name": "GET Daily Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "headerAuth": {
+          "id": "1",
+          "name": "API Financiera Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Formatear reporte para email\nconst reporte = items[0].json;\n\nconst html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; }\n    .header { background-color: #4CAF50; color: white; padding: 20px; }\n    .stats { margin: 20px 0; }\n    .stat-box { \n      display: inline-block; \n      background: #f1f1f1; \n      padding: 15px; \n      margin: 10px;\n      border-radius: 5px;\n    }\n    .stat-value { font-size: 24px; font-weight: bold; color: #4CAF50; }\n    .stat-label { font-size: 14px; color: #666; }\n    table { border-collapse: collapse; width: 100%; margin: 20px 0; }\n    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }\n    th { background-color: #4CAF50; color: white; }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <h1>📊 Reporte Diario - ${reporte.fecha}</h1>\n  </div>\n  \n  <div class=\"stats\">\n    <div class=\"stat-box\">\n      <div class=\"stat-value\">${reporte.total_transacciones}</div>\n      <div class=\"stat-label\">Transacciones</div>\n    </div>\n    \n    <div class=\"stat-box\">\n      <div class=\"stat-value\">$${reporte.monto_total}</div>\n      <div class=\"stat-label\">Monto Total</div>\n    </div>\n    \n    <div class=\"stat-box\">\n      <div class=\"stat-value\">$${reporte.monto_promedio}</div>\n      <div class=\"stat-label\">Promedio</div>\n    </div>\n    \n    <div class=\"stat-box\">\n      <div class=\"stat-value\">${reporte.clientes_unicos}</div>\n      <div class=\"stat-label\">Clientes Únicos</div>\n    </div>\n  </div>\n  \n  <h2>Desglose por Tipo</h2>\n  <table>\n    <tr>\n      <th>Tipo</th>\n      <th>Cantidad</th>\n      <th>Total</th>\n    </tr>\n    ${Object.entries(reporte.por_tipo || {}).map(([tipo, datos]) => `\n    <tr>\n      <td>${tipo}</td>\n      <td>${datos.count}</td>\n      <td>$${datos.total.toFixed(2)}</td>\n    </tr>\n    `).join('')}\n  </table>\n  \n  <h2>Desglose por Estado</h2>\n  <table>\n    <tr>\n      <th>Estado</th>\n      <th>Cantidad</th>\n    </tr>\n    ${Object.entries(reporte.por_estado || {}).map(([estado, count]) => `\n    <tr>\n      <td>${estado}</td>\n      <td>${count}</td>\n    </tr>\n    `).join('')}\n  </table>\n  \n  <p style=\"margin-top: 30px; color: #666; font-size: 12px;\">\n    Reporte generado automáticamente por n8n<br>\n    Fecha: ${new Date().toLocaleString()}\n  </p>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    subject: `📊 Reporte Diario - ${reporte.fecha}`,\n    html: html,\n    fecha: reporte.fecha,\n    stats: reporte\n  }\n}];"
+      },
+      "name": "Formatear HTML",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "reportes@tuempresa.com",
+        "toEmail": "admin@tuempresa.com",
+        "subject": "={{$json.subject}}",
+        "emailType": "html",
+        "message": "={{$json.html}}",
+        "options": {}
+      },
+      "name": "Enviar Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [850, 200],
+      "notes": "Configurar credenciales SMTP"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "TU_SPREADSHEET_ID",
+        "range": "Reportes!A:H",
+        "options": {
+          "valueInputMode": "USER_ENTERED"
+        },
+        "columns": {
+          "mappingsUi": {
+            "values": [
+              {
+                "column": "Fecha",
+                "value": "={{$json.stats.fecha}}"
+              },
+              {
+                "column": "Total Transacciones",
+                "value": "={{$json.stats.total_transacciones}}"
+              },
+              {
+                "column": "Monto Total",
+                "value": "={{$json.stats.monto_total}}"
+              },
+              {
+                "column": "Promedio",
+                "value": "={{$json.stats.monto_promedio}}"
+              },
+              {
+                "column": "Mínimo",
+                "value": "={{$json.stats.transaccion_minima}}"
+              },
+              {
+                "column": "Máximo",
+                "value": "={{$json.stats.transaccion_maxima}}"
+              },
+              {
+                "column": "Clientes Únicos",
+                "value": "={{$json.stats.clientes_unicos}}"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Guardar en Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [850, 400],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Conectar con Google Sheets"
+    }
+  ],
+  "connections": {
+    "Cron Trigger - 23:00": {
+      "main": [
+        [
+          {
+            "node": "GET Daily Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Daily Report": {
+      "main": [
+        [
+          {
+            "node": "Formatear HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear HTML": {
+      "main": [
+        [
+          {
+            "node": "Enviar Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Guardar en Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

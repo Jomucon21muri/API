@@ -1,0 +1,4 @@
+# .env - Configuración del bot de Telegram
+# ⚠️ NO SUBIR ESTE ARCHIVO A GIT
+
+# Asegúrate de añadir .env al archivo .gitignore

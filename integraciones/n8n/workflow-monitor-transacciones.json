@@ -1,0 +1,161 @@
+{
+  "name": "Monitor de Transacciones Grandes",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/transactions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "headerAuth",
+        "options": {}
+      },
+      "name": "GET Transactions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "headerAuth": {
+          "id": "1",
+          "name": "API Financiera Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Filtrar transacciones mayores a $1000\nconst umbral = 1000;\nconst transacciones = items[0].json.data;\n\nconst grandes = transacciones.filter(tx => {\n  return parseFloat(tx.monto) > umbral;\n});\n\nconsole.log(`Total transacciones: ${transacciones.length}`);\nconsole.log(`Transacciones grandes (>${umbral}): ${grandes.length}`);\n\n// Mapear a formato para n8n\nreturn grandes.map(tx => ({\n  json: {\n    id: tx.id,\n    monto: tx.monto,\n    moneda: tx.moneda,\n    cliente: tx.customer_nombre,\n    email: tx.customer_email,\n    descripcion: tx.descripcion,\n    fecha: tx.fecha,\n    estado: tx.estado,\n    alerta: `⚠️ Transacción grande: $${tx.monto} ${tx.moneda}`,\n    umbral: umbral\n  }\n}));"
+      },
+      "name": "Filtrar Grandes",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.monto}}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "Hay alertas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Formatear mensaje de alerta\nconst alertas = items;\n\nlet mensaje = `🚨 ALERTA: ${alertas.length} transacción(es) grande(s) detectada(s)\\n\\n`;\n\nalertas.forEach((alerta, index) => {\n  const tx = alerta.json;\n  mensaje += `${index + 1}. ID: ${tx.id}\\n`;\n  mensaje += `   Monto: $${tx.monto} ${tx.moneda}\\n`;\n  mensaje += `   Cliente: ${tx.cliente} (${tx.email})\\n`;\n  mensaje += `   Descripción: ${tx.descripcion}\\n`;\n  mensaje += `   Fecha: ${new Date(tx.fecha).toLocaleString()}\\n`;\n  mensaje += `   Estado: ${tx.estado}\\n\\n`;\n});\n\nreturn [{\n  json: {\n    mensaje: mensaje,\n    num_alertas: alertas.length,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "name": "Formatear Mensaje",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "text": "={{$json.mensaje}}",
+        "additionalFields": {
+          "username": "API Financiera Bot"
+        }
+      },
+      "name": "Notificar (Webhook ejemplo)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [1250, 200],
+      "notes": "Reemplazar con Slack/Email/Discord según necesites"
+    },
+    {
+      "parameters": {},
+      "name": "No hay alertas",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1050, 400]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "GET Transactions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Transactions": {
+      "main": [
+        [
+          {
+            "node": "Filtrar Grandes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar Grandes": {
+      "main": [
+        [
+          {
+            "node": "Hay alertas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hay alertas?": {
+      "main": [
+        [
+          {
+            "node": "Formatear Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No hay alertas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Notificar (Webhook ejemplo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
