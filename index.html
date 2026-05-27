@@ -1018,6 +1018,13 @@
             apiKey: 'api_key_demo_12345'
         };
 
+        // Detectar si estamos en un codespace y ajustar la URL
+        if (window.location.hostname.includes('github.dev') || window.location.hostname.includes('app.github.dev')) {
+            // Estamos en GitHub Codespaces, usar la URL del codespace
+            const codespaceUrl = window.location.origin.replace(/:\d+/, ':5000');
+            config.apiUrl = codespaceUrl + '/api';
+        }
+
         // Load config from localStorage
         function loadConfig() {
             const saved = localStorage.getItem('apiConfig');
@@ -1066,12 +1073,20 @@
         async function testConnection() {
             try {
                 updateStatus('connecting');
-                await apiCall('/health');
+                const result = await apiCall('/health');
                 updateStatus('connected');
-                alert('✓ Conexión exitosa con la API');
+                alert('Conexión exitosa con la API\n\nEstado: ' + result.status + '\nBase de datos: ' + result.database);
             } catch (error) {
                 updateStatus('disconnected');
-                alert('✗ Error de conexión: ' + error.message);
+                console.error('Error detallado:', error);
+                let errorMsg = 'Error de conexión:\n\n';
+                errorMsg += 'Mensaje: ' + error.message + '\n';
+                errorMsg += 'URL de API: ' + config.apiUrl + '\n\n';
+                errorMsg += 'Verifica que:\n';
+                errorMsg += '1. La API esté ejecutándose (python3 api/app.py)\n';
+                errorMsg += '2. El puerto 5000 esté accesible\n';
+                errorMsg += '3. CORS esté habilitado en la API';
+                alert(errorMsg);
             }
         }
 

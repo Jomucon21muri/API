@@ -173,27 +173,53 @@ Este comando ejecuta:
 
 **Paso 6: Iniciar el sistema**
 
-Opción automática (Windows):
+Opción recomendada (dos terminales):
+
+Terminal 1 - Iniciar la API:
+```bash
+cd api
+python3 app.py
+```
+
+La API estará disponible en http://localhost:5000
+
+Terminal 2 - Iniciar servidor web para el dashboard:
+```bash
+python3 -m http.server 8080
+```
+
+El dashboard estará disponible en http://localhost:8080
+
+Opción alternativa (Windows con PowerShell):
 ```powershell
 .\start_dashboard.ps1
 ```
-
-Opción manual:
-```bash
-cd api
-python app.py
-```
-
-El sistema estará disponible en http://localhost:5000
 
 ### Verificación de instalación
 
 Para verificar que el sistema funciona correctamente:
 
-1. Acceder a http://localhost:5000/api/health
-2. El sistema debe responder con estado "healthy"
-3. Abrir dashboard.html en el navegador
-4. Verificar conexión con la API desde la sección Configuración
+1. Verificar que la API responde:
+   ```bash
+   curl http://localhost:5000/api/health
+   ```
+   Debe responder con estado "ok" y "database: connected"
+
+2. Abrir el dashboard en el navegador:
+   - Navegar a http://localhost:8080
+   - O abrir directamente index.html (puede tener problemas con CORS)
+
+3. En el dashboard, ir a la sección "Settings" (Configuración):
+   - Verificar que la URL de API sea: http://localhost:5000/api
+   - Verificar que la API Key sea: api_key_demo_12345
+   - Hacer clic en "Test Connection"
+   - Debe mostrar "Conexión exitosa"
+
+4. Explorar las diferentes secciones del dashboard:
+   - Overview: Ver estadísticas generales
+   - Customers: Listar clientes (40 registros)
+   - Transactions: Ver transacciones (368 registros)
+   - Portfolio: Consultar carteras de inversión
 
 
 
@@ -223,6 +249,75 @@ Presenta un resumen general del sistema con:
 ### Actualización de datos
 
 Los datos del dashboard se cargan mediante llamadas a la API REST. Para actualizar la información, utilizar el botón "Recargar" disponible en cada sección.
+
+## Solución de problemas
+
+### Problema: El dashboard muestra "Desconectado" o "Failed to fetch"
+
+**Diagnóstico:**
+Este error indica que el dashboard no puede conectarse a la API.
+
+**Soluciones:**
+
+1. **Verificar que la API esté ejecutándose:**
+   ```bash
+   curl http://localhost:5000/api/health
+   ```
+   Si no responde, iniciar la API:
+   ```bash
+   cd api
+   python3 app.py
+   ```
+
+2. **Verificar acceso al dashboard desde servidor HTTP:**
+   - Correcto: http://localhost:8080 (usando python3 -m http.server 8080)
+   - Incorrecto: file:///ruta/al/index.html (causará errores CORS)
+
+3. **Verificar configuración en el dashboard:**
+   - Ir a Settings (Configuración)
+   - URL de API: http://localhost:5000/api
+   - API Key: api_key_demo_12345
+   - Hacer clic en "Test Connection"
+
+4. **Revisar consola del navegador (F12):**
+   - Errores CORS: No estás usando un servidor HTTP
+   - Errores de red: La API no está corriendo
+   - Error 401: API Key incorrecta
+
+5. **Si estás en un Codespace o entorno remoto:**
+   - El dashboard detecta automáticamente la URL correcta
+   - Asegurar que los puertos 5000 y 8080 estén públicamente accesibles
+   - Verificar que los puertos estén reenviados correctamente
+
+### Problema: Error al cargar datos
+
+**Solución:**
+1. Verificar que la base de datos esté inicializada:
+   ```bash
+   ls -lh api/instance/financial.db
+   ```
+2. Si no existe, inicializar con:
+   ```bash
+   python scripts/populate_db.py
+   ```
+3. Verificar logs de la API en la terminal donde se ejecuta
+
+### Problema: Dependencias no instaladas
+
+**Solución:**
+```bash
+cd api
+pip install -r requirements.txt
+```
+
+### Problema: Puerto 5000 ocupado
+
+**Solución:**
+1. Identificar el proceso:
+   ```bash
+   lsof -i :5000
+   ```
+2. Detener el proceso o cambiar el puerto en api/app.py
 
 
 Documentación técnica - Versión 1.0
