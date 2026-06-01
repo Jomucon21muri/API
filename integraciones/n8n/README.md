@@ -1,42 +1,43 @@
-# Integración n8n con API Financiera
+# Integración n8n con sistema de gestión financiera
 
-Este directorio contiene workflows de ejemplo para n8n que se integran con la API Financiera.
+Este directorio contiene workflows de ejemplo para n8n que se integran con la API del sistema de gestión financiera.
 
 ## Workflows disponibles
 
 ### 1. Monitor de transacciones grandes
-**Archivo**: `workflow-monitor-transacciones.json`
 
-**Descripción**: Monitorea transacciones cada 5 minutos y envía alertas cuando hay transacciones mayores a $1000.
+**Archivo**: [workflow-monitor-transacciones.json](workflow-monitor-transacciones.json)
+
+**Descripción**: monitorea transacciones cada 5 minutos y envía alertas cuando hay transacciones mayores a 1000 USD.
 
 **Nodos utilizados**:
 - Schedule Trigger (cada 5 minutos)
 - HTTP Request (GET /api/transactions)
-- Function (filtrar transacciones > $1000)
+- Function (filtrar transacciones superiores a 1000 USD)
 - IF (verificar si hay alertas)
 - Webhook/Email/Slack (notificación)
 
 **Configuración**:
 1. Importar el workflow en n8n
 2. Configurar credenciales de autenticación (Header Auth con X-API-Key)
-3. Configurar el nodo de notificación (Slack/Email)
+3. Configurar el nodo de notificación (Slack o correo electrónico)
 4. Activar el workflow
 
 ### 2. Reporte diario automatizado
-**Archivo**: `workflow-reporte-diario.json`
 
-**Descripción**: Genera un reporte diario de transacciones a las 23:00 y lo envía por email.
+**Archivo**: [workflow-reporte-diario.json](workflow-reporte-diario.json)
+
+**Descripción**: genera un reporte diario de transacciones a las 23:00 y lo envía por correo electrónico.
 
 **Nodos utilizados**:
 - Cron Trigger (diario a las 23:00)
 - HTTP Request (GET /api/reports/daily)
 - Function (formatear datos)
-- Email/Google Sheets (envío/almacenamiento)
+- Email/Google Sheets (envío o almacenamiento)
 
 ### 3. Sincronización con Google Sheets
-**Archivo**: `workflow-sync-sheets.json`
 
-**Descripción**: Cada hora, obtiene las transacciones nuevas y las agrega a Google Sheets.
+**Descripción**: cada hora, obtiene las transacciones nuevas y las agrega a Google Sheets.
 
 **Nodos utilizados**:
 - Schedule Trigger (cada hora)
@@ -47,7 +48,7 @@ Este directorio contiene workflows de ejemplo para n8n que se integran con la AP
 
 ## Instrucciones de importación
 
-### Paso 1: Instalar n8n
+### Paso 1: instalar n8n
 
 **Opción A - Docker (recomendado)**:
 ```bash
@@ -64,18 +65,18 @@ npm install n8n -g
 n8n start
 ```
 
-### Paso 2: Importar workflows
+### Paso 2: importar workflows
 
 1. Abrir n8n en `http://localhost:5678`
-2. Click en el botón "Import from File"
+2. Hacer clic en el botón "Import from File"
 3. Seleccionar el archivo JSON del workflow
-4. Click en "Import"
+4. Hacer clic en "Import"
 
-### Paso 3: Configurar credenciales
+### Paso 3: configurar credenciales
 
 #### Autenticación API
 
-1. Click en "Credentials" → "New"
+1. Hacer clic en "Credentials" → "New"
 2. Seleccionar "Header Auth"
 3. Configurar:
    - **Name**: API Financiera Auth
@@ -87,15 +88,15 @@ n8n start
 Si n8n está en Docker, usar: `http://host.docker.internal:5000/api`  
 Si n8n está en local, usar: `http://localhost:5000/api`
 
-### Paso 4: Probar workflow
+### Paso 4: probar workflow
 
-1. Click en "Execute Workflow"
+1. Hacer clic en "Execute Workflow"
 2. Verificar resultados en cada nodo
 3. Ajustar según necesidades
 
-### Paso 5: Activar workflow
+### Paso 5: activar workflow
 
-1. Toggle "Active" en la esquina superior derecha
+1. Activar el toggle "Active" en la esquina superior derecha
 2. El workflow se ejecutará automáticamente
 
 ## Personalización
@@ -124,6 +125,8 @@ const umbral = 1000;
 const grandesTransacciones = items[0].json.data.filter(tx => {
   return parseFloat(tx.monto) > umbral;
 });
+
+return grandesTransacciones.map(tx => ({json: tx}));
 ```
 
 ### Agregar más filtros
@@ -148,6 +151,70 @@ const transaccionesHoy = items[0].json.data.filter(tx => {
 ```
 
 ## Solución de problemas
+
+### Error de conexión
+
+**Problema**: n8n no puede conectarse a la API.
+
+**Solución**:
+- Verificar que la API esté ejecutándose
+- Si n8n está en Docker, usar `host.docker.internal` en lugar de `localhost`
+- Verificar que la API Key sea correcta
+
+### Error de autenticación
+
+**Problema**: respuesta 401 Unauthorized.
+
+**Solución**:
+- Verificar credenciales en n8n
+- Asegurarse de que el header sea exactamente `X-API-Key`
+- Verificar que el valor de la API Key sea correcto
+
+### Workflow no se activa
+
+**Problema**: el workflow programado no se ejecuta.
+
+**Solución**:
+- Verificar que el workflow esté activado (toggle en ON)
+- Revisar la configuración del Schedule Trigger
+- Consultar los logs de n8n para errores
+
+## Características avanzadas
+
+### Variables de entorno
+
+Almacenar configuración sensible en variables de entorno:
+
+```bash
+export N8N_API_KEY="api_key_demo_12345"
+export N8N_API_URL="http://localhost:5000/api"
+```
+
+Luego usar en n8n: `{{$env.N8N_API_KEY}}`
+
+### Webhooks
+
+Configurar webhook para triggers en tiempo real:
+
+1. Agregar nodo "Webhook"
+2. Configurar método HTTP (POST)
+3. Copiar URL del webhook
+4. Configurar la API para enviar eventos a esa URL
+
+### Error handling
+
+Agregar nodos de manejo de errores:
+
+1. Hacer clic derecho en el nodo
+2. Seleccionar "Add Error Trigger"
+3. Configurar acción alternativa
+
+## Recursos adicionales
+
+- [Documentación oficial de n8n](https://docs.n8n.io/)
+- [n8n Community](https://community.n8n.io/)
+- [API de referencia del sistema](../../README.md)
+
 
 ### Error: "Connection refused"
 

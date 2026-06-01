@@ -1,62 +1,115 @@
-# Inicio rápido
+# Guía de inicio rápido
 
-## Ejecutar el sistema completo en 30 segundos
+## Descripción general
 
-### Linux/Mac:
+Esta guía proporciona instrucciones concisas para la inicialización y puesta en marcha del sistema de gestión financiera. El tiempo estimado de configuración es inferior a dos minutos.
+
+## Ejecución del sistema completo
+
+### Entorno Linux/macOS
+
 ```bash
 ./start.sh
 ```
 
-### Windows PowerShell:
+### Entorno Windows con PowerShell
+
 ```powershell
 .\start_dashboard.ps1
 ```
 
-### Manual (dos terminales):
+### Ejecución manual (dos terminales simultáneas)
 
-**Terminal 1 - API:**
+Esta opción ofrece mayor control sobre los procesos de servidor.
+
+**Terminal 1 - Servidor de API:**
 ```bash
 cd api
 python3 app.py
 ```
 
-**Terminal 2 - Dashboard:**
+**Terminal 2 - Servidor web para el panel de control:**
 ```bash
 python3 -m http.server 8080
 ```
 
-## Acceder al sistema
+## Acceso a los componentes del sistema
 
-1. **Dashboard**: http://localhost:8080
-2. **API**: http://localhost:5000/api/health
+Una vez iniciado el sistema, los siguientes servicios estarán disponibles:
 
-## Configuración del dashboard
+1. **Panel de control (Dashboard)**: http://localhost:8080
+2. **API REST**: http://localhost:5000
+3. **Verificación de estado**: http://localhost:5000/api/health
 
-En la sección "Settings":
-- **URL de API**: http://localhost:5000/api
-- **API Key**: api_key_demo_12345
+## Configuración inicial del panel de control
 
-Hacer clic en "Test Connection" para verificar.
+Acceda a la sección de configuración (Settings) e ingrese los siguientes parámetros:
 
-## Datos de prueba
+- **URL base de la API**: http://localhost:5000/api
+- **Clave de autenticación (API Key)**: api_key_demo_12345
 
-El sistema incluye:
-- 40 clientes en 11 países
-- 368 transacciones
-- 160 posiciones de portfolio
-- 15 acciones del mercado
+Utilice la función "Test Connection" para validar la conectividad entre componentes.
 
-## Problemas comunes
+## Datos de demostración incluidos
 
-### "Failed to fetch" al probar conexión:
+El sistema incluye un conjunto de datos de prueba preconfigurado:
 
-1. Verificar que la API esté corriendo:
-   ```bash
-   curl http://localhost:5000/api/health
-   ```
+- 40 registros de clientes distribuidos en 11 países
+- 368 transacciones financieras de múltiples tipologías
+- 160 posiciones activas de portafolio
+- 15 acciones del mercado con información actualizada
 
-2. Acceder al dashboard desde http://localhost:8080 (no abrir archivo directamente)
+## Resolución de problemas frecuentes
 
-3. Verificar configuración en Settings
+### Error: "Failed to fetch" al verificar conexión
 
-Ver más en [README.md](README.md) sección "Solución de problemas"
+Este error indica problemas de conectividad entre el panel de control y la API. Siga estos pasos de diagnóstico:
+
+**1. Verificar estado del servidor de API:**
+```bash
+curl http://localhost:5000/api/health
+```
+
+La respuesta esperada debe incluir el campo `"status": "ok"`.
+
+**2. Validar método de acceso al panel de control:**
+
+El panel de control debe accederse mediante http://localhost:8080. No abra el archivo index.html directamente en el navegador, ya que esto causará problemas de política de CORS (Cross-Origin Resource Sharing).
+
+**3. Confirmar configuración de parámetros:**
+
+Revise que la configuración en la sección Settings corresponda exactamente con los valores indicados en la sección de configuración inicial.
+
+**4. Verificar puertos de red:**
+
+Asegúrese de que los puertos 5000 y 8080 no estén siendo utilizados por otros servicios. Para verificar:
+
+```bash
+# Linux/macOS
+lsof -i :5000
+lsof -i :8080
+
+# Windows PowerShell
+netstat -ano | findstr :5000
+netstat -ano | findstr :8080
+```
+
+### Error: "ModuleNotFoundError" al iniciar la API
+
+Este error indica que las dependencias de Python no están instaladas. Ejecute:
+
+```bash
+cd api
+pip install -r requirements.txt
+```
+
+### El panel de control no carga correctamente
+
+Verifique que está utilizando un navegador web moderno (Chrome, Firefox, Safari o Edge en sus versiones actuales).
+
+## Siguientes pasos
+
+Para información detallada sobre arquitectura, configuración avanzada y documentación completa de la API, consulte el archivo [README.md](README.md).
+
+Para guías de integración con servicios de automatización, revise la documentación en el directorio `docs/`.
+

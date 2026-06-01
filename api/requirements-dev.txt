@@ -1,0 +1,68 @@
+# ==============================================================================
+# Dependencias de desarrollo para API Financiera
+# ==============================================================================
+# Incluir todas las dependencias de producción
+-r requirements.txt
+
+# ==============================================================================
+# Testing
+# ==============================================================================
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-flask==1.3.0
+pytest-mock==3.14.0
+
+# ==============================================================================
+# Calidad de código
+# ==============================================================================
+# Formateo de código
+black==24.10.0
+isort==5.13.2
+
+# Análisis estático
+flake8==7.1.1
+pylint==3.3.2
+mypy==1.13.0
+
+# Seguridad
+bandit==1.8.0
+safety==3.2.11
+
+# ==============================================================================
+# Herramientas de desarrollo
+# ==============================================================================
+# REPL mejorado
+ipython==8.31.0
+
+# Depuración
+ipdb==0.13.13
+
+# Documentación
+sphinx==8.1.3
+sphinx-rtd-theme==3.0.2
+
+# Pre-commit hooks
+pre-commit==4.0.1
+
+# ==============================================================================
+# Notas de instalación:
+# ==============================================================================
+# Instalar dependencias de desarrollo:
+#   pip install -r requirements-dev.txt
+#
+# Ejecutar tests:
+#   pytest --cov=api --cov-report=html
+#
+# Formatear código:
+#   black api/
+#   isort api/
+#
+# Análisis de código:
+#   flake8 api/
+#   pylint api/
+#   mypy api/
+#
+# Verificar seguridad:
+#   bandit -r api/
+#   safety check
+# ==============================================================================

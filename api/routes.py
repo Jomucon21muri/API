@@ -1,22 +1,63 @@
 """
-Rutas de la API Financiera
-Define todos los endpoints REST
+Definición de endpoints REST de la API.
+
+Este módulo contiene todos los endpoints de la API REST organizados
+por categorías funcionales: clientes, transacciones, reportes, acciones,
+portafolios y estadísticas del sistema.
+
+Grupos de endpoints:
+    - /api/customers: Gestión de clientes (4 endpoints)
+    - /api/transactions: Gestión de transacciones (4 endpoints)
+    - /api/reports: Generación de reportes (2 endpoints)
+    - /api/stocks: Gestión de acciones del mercado (5 endpoints)
+    - /api/portfolio: Gestión de portafolios (5 endpoints)
+    - /api/stats: Estadísticas globales (1 endpoint)
+    - /api/workflows: Estado de workflows (1 endpoint)
+    - /api/health: Verificación de estado (1 endpoint)
+
+Total: 23 endpoints disponibles
 """
 
-from flask import jsonify, request
+from flask import Flask, jsonify, request
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from sqlalchemy import func
+from typing import Tuple, Dict, Any, List
+import logging
+
 from models import Customer, Transaction, AuditLog, Stock, Portfolio, create_audit_log
 
+logger = logging.getLogger(__name__)
 
-def register_routes(app, db):
-    """Registrar todas las rutas en la aplicación Flask"""
+
+def register_routes(app: Flask, db: SQLAlchemy) -> None:
+    """
+    Registra todas las rutas en la aplicación Flask.
+    
+    Esta función define y registra todos los endpoints de la API REST.
+    Se invoca durante la inicialización de la aplicación.
+    
+    Args:
+        app: Instancia de la aplicación Flask
+        db: Instancia de SQLAlchemy para acceso a base de datos
+    """
     
     # ==================== CUSTOMERS ====================
     
     @app.route('/api/customers', methods=['GET'])
-    def get_customers():
-        """Listar todos los clientes"""
+    def get_customers() -> Tuple[Dict[str, Any], int]:
+        """
+        Lista todos los clientes con filtros opcionales y paginación.
+        
+        Query Parameters:
+            activo (bool): Filtrar por estado activo
+            pais (str): Filtrar por código de país
+            page (int): Número de página (default: 1)
+            per_page (int): Registros por página (default: 50, max: 100)
+            
+        Returns:
+            JSON con lista de clientes y metadatos de paginación
+        """
         try:
             # Filtros opcionales
             activo = request.args.get('activo', type=bool)
@@ -31,11 +72,13 @@ def register_routes(app, db):
             if pais:
                 query = query.filter_by(pais=pais)
             
-            # Paginación
+            # Paginación con límite máximo
             page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', 50, type=int)
+            per_page = min(request.args.get('per_page', 50, type=int), 100)
             
             customers = query.paginate(page=page, per_page=per_page, error_out=False)
+            
+            logger.info(f'Consulta de clientes: página {page}, filtros: activo={activo}, pais={pais}')
             
             return jsonify({
                 'success': True,
@@ -46,38 +89,63 @@ def register_routes(app, db):
                     'total': customers.total,
                     'pages': customers.pages
                 }
-            })
+            }), 200
         
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            logger.error(f'Error al listar clientes: {e}', exc_info=True)
+            return jsonify({'success': False, 'error': str(e)}), 500
     
     
     @app.route('/api/customers/<int:customer_id>', methods=['GET'])
-    def get_customer(customer_id):
-        """Obtener un cliente específico"""
+    def get_customer(customer_id: int) -> Tuple[Dict[str, Any], int]:
+        """
+        Obtiene los detalles de un cliente específico.
+        
+        Args:
+            customer_id: ID del cliente a consultar
+            
+        Returns:
+            JSON con datos del cliente o error 404 si no existe
+        """
         customer = Customer.query.get_or_404(customer_id)
+        logger.info(f'Consulta de cliente ID {customer_id}')
         return jsonify({
             'success': True,
             'data': customer.to_dict()
-        })
+        }), 200
     
     
     @app.route('/api/customers', methods=['POST'])
-    def create_customer():
-        """Crear nuevo cliente"""
+    def create_customer() -> Tuple[Dict[str, Any], int]:
+        """
+        Crea un nuevo cliente en el sistema.
+        
+        Request Body (JSON):
+            email (str, required): Correo electrónico único
+            nombre (str, required): Nombre del cliente
+            apellido (str, optional): Apellido del cliente
+            pais (str, optional): Código de país (default: ES)
+            telefono (str, optional): Número de teléfono
+            
+        Returns:
+            JSON con datos del cliente creado (201) o error de validación (400)
+        """
         try:
             data = request.get_json()
             
+            if not data:
+                return jsonify({'success': False, 'error': 'Datos JSON requeridos'}), 400
+            
             # Validaciones
             if not data.get('email'):
-                return jsonify({'error': 'Email es requerido'}), 400
+                return jsonify({'success': False, 'error': 'Email es requerido'}), 400
             
             if not data.get('nombre'):
-                return jsonify({'error': 'Nombre es requerido'}), 400
+                return jsonify({'success': False, 'error': 'Nombre es requerido'}), 400
             
             # Verificar email único
             if Customer.query.filter_by(email=data['email']).first():
-                return jsonify({'error': 'Email ya existe'}), 400
+                return jsonify({'success': False, 'error': 'Email ya existe'}), 400
             
             # Crear cliente
             customer = Customer(
@@ -91,6 +159,8 @@ def register_routes(app, db):
             db.session.add(customer)
             db.session.commit()
             
+            logger.info(f'Cliente creado: {customer.email} (ID: {customer.id})')
+            
             return jsonify({
                 'success': True,
                 'message': 'Cliente creado exitosamente',
@@ -99,7 +169,8 @@ def register_routes(app, db):
         
         except Exception as e:
             db.session.rollback()
-            return jsonify({'error': str(e)}), 500
+            logger.error(f'Error al crear cliente: {e}', exc_info=True)
+            return jsonify({'success': False, 'error': str(e)}), 500
     
     
     # ==================== TRANSACTIONS ====================

@@ -1,105 +1,110 @@
-# Bot de Telegram para API Financiera
+# Bot de Telegram para API financiera
 
-Bot de Telegram que proporciona reportes y gestión de transacciones de la API financiera.
+Bot de Telegram que proporciona reportes automatizados y gestión de transacciones del sistema de API financiera.
 
-## 🚀 Inicio rápido
+## Inicio rápido
 
-### 1. Instalar dependencias
+### 1. Instalación de dependencias
 
-```powershell
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configurar el bot
+### 2. Configuración del bot
 
-1. **Crear el bot en Telegram:**
-   - Abre Telegram y busca `@BotFather`
-   - Envía `/newbot` y sigue las instrucciones
-   - Guarda el token que te proporcione
+**Paso 1: Crear el bot en Telegram**
 
-2. **Configurar variables de entorno:**
-   ```powershell
-   Copy-Item .env.example .env
-   ```
-   
-3. **Editar el archivo `.env`:**
-   - Abre `.env` y añade tu token de Telegram
-   - Añade tu ID de Telegram (obtenerlo de @userinfobot)
+- Abrir Telegram y buscar @BotFather
+- Enviar el comando /newbot y seguir las instrucciones
+- Guardar el token proporcionado
 
-### 3. Iniciar el bot
+**Paso 2: Configurar variables de entorno**
 
-**Opción A - Usar el script:**
-```powershell
-.\start_bot.ps1
+```bash
+cp .env.example .env
 ```
 
-**Opción B - Manualmente:**
-```powershell
+**Paso 3: Editar el archivo .env**
+
+- Agregar el token de Telegram obtenido
+- Agregar el ID de usuario de Telegram (obtenerlo desde @userinfobot)
+- Configurar la URL de la API
+
+### 3. Ejecución del bot
+
+**Opción A - Mediante script:**
+```bash
+./start_bot.ps1  # Windows PowerShell
+```
+
+**Opción B - Ejecución directa:**
+```bash
 python bot.py
 ```
 
-## 📋 Comandos disponibles
+## Comandos disponibles
 
 | Comando | Descripción |
 |---------|-------------|
-| `/start` | Iniciar el bot y ver comandos |
-| `/help` | Ayuda detallada |
-| `/reporte_diario` | Reporte de transacciones del día |
-| `/reporte_semanal` | Reporte de últimos 7 días |
-| `/reporte_mensual` | Reporte del mes actual |
-| `/estadisticas` | Estadísticas generales del sistema |
-| `/listar_transacciones` | Últimas 10 transacciones |
-| `/buscar_transaccion ID` | Buscar transacción específica |
-| `/cliente ID` | Información de un cliente |
-| `/portfolio` | Reporte de portfolios |
+| /start | Iniciar el bot y mostrar menú de comandos |
+| /help | Ayuda detallada del sistema |
+| /reporte_diario | Reporte de transacciones del día actual |
+| /reporte_semanal | Reporte de últimos 7 días |
+| /reporte_mensual | Reporte del mes en curso |
+| /estadisticas | Estadísticas generales del sistema |
+| /listar_transacciones | Últimas 10 transacciones registradas |
+| /buscar_transaccion ID | Buscar transacción específica por ID |
+| /cliente ID | Información detallada de un cliente |
+| /portfolio | Reporte de portafolios de inversión |
 
-## 🔐 Autenticación
+## Autenticación y seguridad
 
-Para permitir solo a ciertos usuarios usar el bot:
+Para restringir el acceso al bot a usuarios autorizados:
 
-1. Obtén tu ID de Telegram con @userinfobot
-2. Añádelo al archivo `.env`:
+1. Obtener el ID de Telegram mediante @userinfobot
+2. Agregar el ID al archivo .env:
    ```env
    AUTHORIZED_USERS=123456789,987654321
    ```
 
-Si dejas `AUTHORIZED_USERS` vacío, cualquiera podrá usar el bot.
+Nota: Si AUTHORIZED_USERS está vacío, el bot será público y cualquier usuario podrá utilizarlo.
 
-## ⚙️ Configuración
+## Configuración
 
-Edita el archivo `.env`:
+Parámetros del archivo .env:
 
 ```env
-# Token del bot (obtenido de @BotFather)
+# Token del bot (proporcionado por @BotFather)
 TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrs...
 
-# URL de tu API
+# URL base de la API REST
 API_BASE_URL=http://localhost:5000/api
 
 # IDs de usuarios autorizados (separados por comas)
 AUTHORIZED_USERS=123456789,987654321
 ```
 
-## 🔧 Solución de problemas
+## Resolución de problemas
 
-### El bot no responde
-- Verifica que el token en `.env` sea correcto
-- Asegúrate de que el bot esté ejecutándose
-- Revisa los logs en la consola
+### El bot no responde a los comandos
+
+- Verificar que el token en .env sea correcto
+- Confirmar que el proceso del bot esté en ejecución
+- Revisar los logs en la consola para identificar errores
 
 ### Error de conexión a la API
-- Verifica que la API esté corriendo: `python ../api/app.py`
-- Confirma que `API_BASE_URL` en `.env` sea correcta
 
-### "No estás autorizado"
-- Verifica que tu ID esté en `AUTHORIZED_USERS`
-- Obtén tu ID con @userinfobot en Telegram
+- Verificar que la API esté ejecutándose: `python ../api/app.py`
+- Confirmar que API_BASE_URL en .env sea la URL correcta
+- Verificar conectividad de red al servidor de la API
 
-## 📚 Documentación completa
+### Mensaje "No estás autorizado para usar este bot"
 
-Ver [docs/bot-telegram-paso-a-paso.md](../docs/bot-telegram-paso-a-paso.md) para la guía completa paso a paso.
+- Verificar que el ID de usuario esté incluido en AUTHORIZED_USERS
+- Confirmar el ID mediante @userinfobot en Telegram
+- Reiniciar el bot después de modificar .env
 
-## 🛠️ Estructura de archivos
+## Estructura de archivos
 
 ```
 telegram_bot/
@@ -111,24 +116,22 @@ telegram_bot/
 └── README.md              # Este archivo
 ```
 
-## 📦 Dependencias
+## Dependencias
 
 - `python-telegram-bot` - Framework para bots de Telegram
 - `requests` - Cliente HTTP para consumir la API
 - `python-dotenv` - Cargar variables de entorno
 
-## 🚀 Despliegue en producción
+## Despliegue en producción
 
-Para mantener el bot ejecutándose 24/7, puedes usar:
+Para mantener el bot ejecutándose de forma continua, se pueden usar las siguientes opciones:
 
-- **PythonAnywhere** (gratis)
-- **Heroku** (gratis/pago)
-- **AWS/GCP/Azure** (pago)
-- **VPS propio** (pago)
+- **PythonAnywhere** (plan gratuito disponible)
+- **Heroku** (planes gratuitos y de pago)
+- **AWS/GCP/Azure** (planes de pago)
+- **VPS propio** (planes de pago)
 
-Ver la guía completa en [docs/bot-telegram-paso-a-paso.md](../docs/bot-telegram-paso-a-paso.md#paso-7-desplegar-el-bot)
-
-## 💡 Ejemplos de uso
+## Ejemplos de uso
 
 ```
 # Ver estadísticas generales
@@ -147,8 +150,8 @@ Ver la guía completa en [docs/bot-telegram-paso-a-paso.md](../docs/bot-telegram
 /listar_transacciones
 ```
 
-## 📝 Notas
+## Notas
 
 - El bot solo funciona si la API está ejecutándose
 - Los reportes se generan en tiempo real consultando la API
-- Puedes ejecutar el bot en tu PC o en un servidor
+- Se puede ejecutar el bot en un ordenador local o en un servidor

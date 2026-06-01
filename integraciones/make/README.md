@@ -1,13 +1,12 @@
-# Integración Make con API Financiera
+# Integración Make con sistema de gestión financiera
 
-Este directorio contiene escenarios de ejemplo para Make (Integromat) que se integran con la API Financiera.
+Este directorio contiene escenarios de ejemplo para Make (anteriormente Integromat) que se integran con la API del sistema de gestión financiera.
 
 ## Escenarios disponibles
 
 ### 1. Sincronización con Google Sheets
-**Archivo**: `scenario-sync-sheets.json`
 
-**Descripción**: Cada hora, obtiene nuevas transacciones y las sincroniza con Google Sheets.
+**Descripción**: sincroniza transacciones con Google Sheets cada hora.
 
 **Módulos utilizados**:
 - Schedule (cada hora)
@@ -16,57 +15,55 @@ Este directorio contiene escenarios de ejemplo para Make (Integromat) que se int
 - Google Sheets - Add a row
 - Data store (evitar duplicados)
 
-### 2. Sistema de alertas multi-canal
-**Archivo**: `scenario-alertas.json`
+### 2. Sistema de alertas multicanal
 
-**Descripción**: Monitorea transacciones grandes y envía alertas por múltiples canales.
+**Descripción**: monitorea transacciones grandes y envía alertas por múltiples canales.
 
 **Flujo**:
 1. Webhook trigger o Schedule
 2. HTTP Request (GET transacciones)
 3. Router (dividir por criterios)
 4. Filtros (monto, país, tipo)
-5. Notificaciones (Email, Slack, SMS)
+5. Notificaciones (correo electrónico, Slack, SMS)
 
 ### 3. Detección de fraude
-**Archivo**: `scenario-fraude.json`
 
-**Descripción**: Detecta patrones sospechosos y crea alertas.
+**Descripción**: detecta patrones sospechosos y crea alertas.
 
 **Criterios de detección**:
 - Múltiples transacciones en poco tiempo
 - Transacciones desde países diferentes
 - Montos inusuales
-- Patrones de velocidad
+- Patrones de velocidad anormales
 
 ## Instalación y configuración
 
-### Paso 1: Crear cuenta en Make
+### Paso 1: crear cuenta en Make
 
-1. Visita [make.com](https://www.make.com)
-2. Registra una cuenta (plan gratuito disponible)
-3. Verifica tu email
+1. Visitar [make.com](https://www.make.com)
+2. Registrar una cuenta (plan gratuito disponible)
+3. Verificar dirección de correo electrónico
 
-### Paso 2: Importar escenario
+### Paso 2: importar escenario
 
-1. En Make, click "Create a new scenario"
-2. Click en los tres puntos (⋯) → "Import Blueprint"
-3. Selecciona el archivo JSON
-4. Click "Save"
+1. En Make, hacer clic en "Create a new scenario"
+2. Hacer clic en los tres puntos (⋯) → "Import Blueprint"
+3. Seleccionar el archivo JSON
+4. Hacer clic en "Save"
 
-### Paso 3: Configurar conexiones
+### Paso 3: configurar conexiones
 
-#### HTTP Request - API Financiera
+#### HTTP Request - API financiera
 
 En cada módulo HTTP:
 
 1. **URL**: `http://tu-api.com/api/transactions`
-   - Para testing local con ngrok: `https://xxxx.ngrok.io/api/transactions`
+   - Para pruebas locales con ngrok: `https://xxxx.ngrok.io/api/transactions`
 
 2. **Method**: GET (o POST según el caso)
 
 3. **Headers**:
-   - Click "Add item"
+   - Hacer clic en "Add item"
    - Name: `X-API-Key`
    - Value: `api_key_demo_12345`
 
@@ -74,17 +71,17 @@ En cada módulo HTTP:
 
 #### Google Sheets
 
-1. Click "Create a connection"
-2. Autoriza tu cuenta de Google
-3. Selecciona el Spreadsheet
-4. Selecciona la hoja (Sheet)
+1. Hacer clic en "Create a connection"
+2. Autorizar cuenta de Google
+3. Seleccionar el Spreadsheet
+4. Seleccionar la hoja (Sheet)
 
-### Paso 4: Configurar Data Store (opcional)
+### Paso 4: configurar Data Store (opcional)
 
 Para evitar duplicados:
 
-1. En Make, ve a "Data stores"
-2. Click "Add data store"
+1. En Make, ir a "Data stores"
+2. Hacer clic en "Add data store"
 3. Nombre: "Transacciones procesadas"
 4. Data structure:
    ```json
@@ -94,10 +91,39 @@ Para evitar duplicados:
    }
    ```
 
-### Paso 5: Activar escenario
+### Paso 5: activar escenario
 
-1. Click "Scheduling" (reloj) en la esquina inferior izquierda
-2. Toggle ON
+1. Hacer clic en "Scheduling" (reloj) en la esquina inferior izquierda
+2. Activar el escenario
+
+## Características avanzadas
+
+### Variables de entorno
+
+Se recomienda utilizar variables de Make para almacenar:
+- URL de la API
+- API Key
+- Configuraciones de umbral
+
+### Manejo de errores
+
+Configurar manejadores de errores en módulos críticos:
+1. Hacer clic derecho en el módulo
+2. Seleccionar "Add error handler"
+3. Configurar acción de fallback
+
+### Limitaciones del plan gratuito
+
+- 1000 operaciones por mes
+- Ejecución cada 15 minutos mínimo
+- 2 escenarios activos simultáneos
+
+## Recursos adicionales
+
+- [Documentación oficial de Make](https://www.make.com/en/help)
+- [Comunidad Make](https://community.make.com/)
+- [API de referencia del sistema](../../README.md)
+
 3. Configura frecuencia de ejecución
 
 ## Ejemplo de escenario paso a paso
@@ -320,13 +346,13 @@ Body: Alerta: Transacción de ${{monto}} {{moneda}} de {{customer_nombre}}. ID: 
 
 ### Ejemplo de optimización
 
-❌ **Ineficiente** (100 operaciones):
+**Ineficiente** (100 operaciones):
 ```
 Schedule → HTTP Request → Iterator (100 items) → Google Sheets
 = 1 + 1 + 100 = 102 operaciones
 ```
 
-✅ **Eficiente** (2 operaciones):
+**Eficiente** (2 operaciones):
 ```
 Schedule → HTTP Request → Google Sheets (bulk insert)
 = 1 + 1 = 2 operaciones

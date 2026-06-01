@@ -1,8 +1,57 @@
-# Dashboard API - Sistema de visualización y gestión de datos financieros
+# Sistema de gestión financiera - API REST y Dashboard
 
 ## Resumen ejecutivo
 
-Este proyecto implementa un sistema completo de gestión financiera compuesto por una API REST desarrollada en Python con Flask, un dashboard web interactivo, y módulos de automatización mediante herramientas de terceros. El sistema está diseñado para desplegarse en GitHub Pages, proporcionando acceso web público al panel de control.
+Sistema completo de gestión financiera desarrollado en Python con Flask, que incluye API REST, dashboard web interactivo y módulos de automatización. El proyecto implementa gestión de clientes, transacciones, portafolios de inversión y análisis de mercado de valores.
+
+## Inicio rápido
+
+### Ejecución del sistema (menos de 2 minutos)
+
+**Linux/macOS:**
+```bash
+./start.sh
+```
+
+**Windows PowerShell:**
+```powershell
+.\start_dashboard.ps1
+```
+
+**Manual (dos terminales):**
+
+Terminal 1 - Servidor de API:
+```bash
+cd api
+python3 app.py
+```
+
+Terminal 2 - Servidor web del dashboard:
+```bash
+python3 -m http.server 8080
+```
+
+### Acceso a los componentes
+
+- **Dashboard**: http://localhost:8080
+- **API**: http://localhost:5000
+- **Verificación de estado**: http://localhost:5000/api/health
+
+### Configuración inicial del dashboard
+
+En la sección Settings, configurar:
+
+- **URL base de la API**: http://localhost:5000/api
+- **Clave de autenticación**: api_key_demo_12345
+
+Utilizar "Test Connection" para validar la conectividad.
+
+### Datos de demostración incluidos
+
+- 40 clientes en 11 países
+- 368 transacciones financieras
+- 160 posiciones de portafolio
+- 15 acciones del mercado con datos actualizados
 
 
 ## Descripción general
@@ -148,7 +197,7 @@ Las dependencias principales incluyen:
 - Flask-CORS: Soporte para CORS
 - python-dotenv: Gestión de variables de entorno
 
-**Paso 4: Configurar variables de entorno**
+**Paso 4: configurar variables de entorno**
 
 Crear archivo .env en la carpeta api/:
 
@@ -159,7 +208,7 @@ DATABASE_URL=sqlite:///financial.db
 API_KEY=api_key_demo_12345
 ```
 
-**Paso 5: Inicializar base de datos**
+**Paso 5: inicializar base de datos**
 
 ```bash
 cd ..
@@ -171,7 +220,7 @@ Este comando ejecuta:
 - Población con datos de ejemplo
 - Verificación de integridad
 
-**Paso 6: Iniciar el sistema**
+**Paso 6: iniciar el sistema**
 
 Opción recomendada (dos terminales):
 
@@ -207,7 +256,7 @@ Para verificar que el sistema funciona correctamente:
 
 2. Abrir el dashboard en el navegador:
    - Navegar a http://localhost:8080
-   - O abrir directamente index.html (puede tener problemas con CORS)
+   - O abrir directamente index.html (puede presentar problemas con CORS)
 
 3. En el dashboard, ir a la sección "Settings" (Configuración):
    - Verificar que la URL de API sea: http://localhost:5000/api
@@ -216,12 +265,12 @@ Para verificar que el sistema funciona correctamente:
    - Debe mostrar "Conexión exitosa"
 
 4. Explorar las diferentes secciones del dashboard:
-   - Overview: Ver estadísticas generales
-   - Customers: Listar clientes (40 registros)
-   - Transactions: Ver transacciones (368 registros)
-   - Portfolio: Consultar carteras de inversión
+   - Overview: estadísticas generales
+   - Customers: listado de clientes (40 registros)
+   - Transactions: transacciones (368 registros)
+   - Portfolio: carteras de inversión
 
-
+## Uso del sistema
 
 ### Navegación por secciones
 
@@ -243,7 +292,7 @@ Presenta un resumen general del sistema con:
 
 **Gestión de portfolio:**
 - Selector de cliente para visualización individual
-- Métricas de valor total, ganancia/pérdida y rendimiento
+- Métricas de valor total, ganancia o pérdida y rendimiento
 - Lista detallada de posiciones en acciones
 
 ### Actualización de datos
@@ -252,7 +301,7 @@ Los datos del dashboard se cargan mediante llamadas a la API REST. Para actualiz
 
 ## Solución de problemas
 
-### Problema: El dashboard muestra "Desconectado" o "Failed to fetch"
+### Problema: el dashboard muestra "Desconectado" o "Failed to fetch"
 
 **Diagnóstico:**
 Este error indica que el dashboard no puede conectarse a la API.
@@ -280,16 +329,16 @@ Este error indica que el dashboard no puede conectarse a la API.
    - Hacer clic en "Test Connection"
 
 4. **Revisar consola del navegador (F12):**
-   - Errores CORS: No estás usando un servidor HTTP
-   - Errores de red: La API no está corriendo
+   - Errores CORS: no se está usando un servidor HTTP
+   - Errores de red: la API no está en ejecución
    - Error 401: API Key incorrecta
 
-5. **Si estás en un Codespace o entorno remoto:**
+5. **Si se trabaja en un Codespace o entorno remoto:**
    - El dashboard detecta automáticamente la URL correcta
    - Asegurar que los puertos 5000 y 8080 estén públicamente accesibles
    - Verificar que los puertos estén reenviados correctamente
 
-### Problema: Error al cargar datos
+### Problema: error al cargar datos
 
 **Solución:**
 1. Verificar que la base de datos esté inicializada:
@@ -302,7 +351,7 @@ Este error indica que el dashboard no puede conectarse a la API.
    ```
 3. Verificar logs de la API en la terminal donde se ejecuta
 
-### Problema: Dependencias no instaladas
+### Problema: dependencias no instaladas
 
 **Solución:**
 ```bash
@@ -310,7 +359,7 @@ cd api
 pip install -r requirements.txt
 ```
 
-### Problema: Puerto 5000 ocupado
+### Problema: puerto 5000 ocupado
 
 **Solución:**
 1. Identificar el proceso:
@@ -319,6 +368,15 @@ pip install -r requirements.txt
    ```
 2. Detener el proceso o cambiar el puerto en api/app.py
 
+## Documentación técnica
 
-Documentación técnica - Versión 1.0
-Última actualización: Mayo 2026
+Sistema de gestión financiera - Versión 1.0  
+Última actualización: mayo de 2026
+
+## Contribuciones
+
+Este repositorio es de uso educativo como apoyo a clases. No se aceptan contribuciones externas.
+
+## Licencia
+
+Material educativo desarrollado con fines académicos.

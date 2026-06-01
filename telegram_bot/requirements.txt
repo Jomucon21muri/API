@@ -1,3 +1,19 @@
+# ==============================================================================
+# Dependencias para Bot de Telegram
+# ==============================================================================
+# Bot de Telegram
 python-telegram-bot==21.9
-requests==2.31.0
-python-dotenv==1.0.0
+
+# Cliente HTTP (versión sincronizada con API)
+requests==2.32.3
+
+# Variables de entorno (versión sincronizada con API)
+python-dotenv==1.0.1
+
+# ==============================================================================
+# Notas de versiones:
+# - python-telegram-bot 21.x requiere Python 3.9+
+# - Mantener requests sincronizado con versión de API (actualmente 2.32.3)
+# - python-dotenv actualizado a 1.0.1 para compatibilidad con API
+# ==============================================================================
+

@@ -1,11 +1,41 @@
 """
-Bot de Telegram para reportes de la API Financiera
-Version mejorada con menus interactivos y multiples comandos
+Bot de Telegram para gestión del sistema financiero.
+
+Este módulo implementa un bot de Telegram que proporciona acceso a los
+datos y reportes del sistema de gestión financiera a través de comandos
+interactivos con menús y botones.
+
+Funcionalidades principales:
+    - Reportes diarios, semanales y mensuales
+    - Consulta de transacciones y clientes
+    - Visualización de portafolios
+    - Estadísticas del sistema
+    - Autenticación de usuarios autorizados
+
+Comandos disponibles:
+    /start - Iniciar el bot y mostrar menú principal
+    /menu - Mostrar menú de navegación
+    /help - Ayuda y lista de comandos
+    /ping - Verificar estado del sistema
+    /estadisticas - Estadísticas globales
+    /reporte_diario - Reporte de transacciones del día
+    /reporte_semanal - Reporte semanal
+    /reporte_mensual - Reporte mensual
+    /transacciones - Listar transacciones recientes
+    /clientes - Listar clientes
+    /portfolio - Ver portafolios
+
+Variables de entorno requeridas:
+    TELEGRAM_BOT_TOKEN: Token del bot de Telegram
+    API_BASE_URL: URL base de la API (default: http://localhost:5000/api)
+    API_KEY: Clave de autenticación de la API
+    AUTHORIZED_USERS: IDs de usuarios autorizados (separados por comas)
 """
 
 import os
 import logging
 from datetime import datetime, timedelta
+from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -19,7 +49,7 @@ from telegram.ext import (
 # Cargar variables de entorno
 load_dotenv()
 
-# Configuracion
+# Configuración
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 API_BASE_URL = os.getenv('API_BASE_URL', 'http://localhost:5000/api')
 API_KEY = os.getenv('API_KEY', 'api_key_demo_12345')
@@ -37,34 +67,77 @@ logger = logging.getLogger(__name__)
 # ==================== FUNCIONES AUXILIARES ====================
 
 def is_authorized(user_id: int) -> bool:
-    """Verificar si el usuario esta autorizado"""
+    """
+    Verifica si un usuario está autorizado para usar el bot.
+    
+    Args:
+        user_id: ID del usuario de Telegram
+        
+    Returns:
+        True si el usuario está autorizado, False en caso contrario.
+        Si AUTHORIZED_USERS está vacío, todos los usuarios están autorizados.
+    """
     if not AUTHORIZED_USERS:
         return True
     return user_id in AUTHORIZED_USERS
 
 
-def get_api(endpoint: str) -> dict:
-    """Hacer peticion GET a la API"""
+def get_api(endpoint: str) -> Dict[str, Any]:
+    """
+    Realiza una petición GET a la API del sistema.
+    
+    Args:
+        endpoint: Ruta del endpoint (ejemplo: '/transactions')
+        
+    Returns:
+        Dict con la respuesta JSON de la API o dict con clave 'error'
+    """
     try:
         url = f"{API_BASE_URL}{endpoint}"
         headers = {'X-API-Key': API_KEY}
         response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
         return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f'Error en petición API {endpoint}: {e}')
+        return {'error': str(e)}
     except Exception as e:
-        logger.error(f"Error en peticion API: {e}")
+        logger.error(f'Error inesperado en petición API: {e}')
         return {'error': str(e)}
 
 
 def format_money(amount: float, currency: str = 'USD') -> str:
-    """Formatear cantidad de dinero"""
-    symbol = {'USD': '$', 'EUR': '€', 'GBP': '£'}.get(currency, '$')
+    """
+    Formatea una cantidad monetaria con su símbolo correspondiente.
+    
+    Args:
+        amount: Cantidad a formatear
+        currency: Código de moneda (USD, EUR, GBP, etc.)
+        
+    Returns:
+        String formateado con símbolo de moneda y separadores de miles
+    """
+    symbols = {
+        'USD': '$', 'EUR': '€', 'GBP': '£', 
+        'MXN': '$', 'JPY': '¥', 'BRL': 'R$'
+    }
+    symbol = symbols.get(currency, '$')
     return f"{symbol}{amount:,.2f}"
 
 
 # ==================== COMANDOS PRINCIPALES ====================
 
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Comando /start con menu interactivo"""
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Comando /start - Inicia el bot y muestra el menú principal.
+    
+    Presenta un menú interactivo con botones para acceder a las diferentes
+    funcionalidades del bot.
+    
+    Args:
+        update: Objeto Update de Telegram
+        context: Contexto de la conversación
+    """
     user = update.effective_user
     
     keyboard = [
@@ -78,7 +151,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ],
         [
             InlineKeyboardButton("Stocks", callback_data='menu_stocks'),
-            InlineKeyboardButton("Estadisticas", callback_data='estadisticas')
+            InlineKeyboardButton("Estadísticas", callback_data='estadisticas')
         ],
         [
             InlineKeyboardButton("Ayuda", callback_data='help'),
@@ -90,13 +163,14 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_message = f"""
 Hola {user.first_name}
 
-Soy el bot de la API Financiera.
+Bienvenido al bot del sistema de gestión financiera.
 
-Usa los botones del menu o escribe /help para ver todos los comandos disponibles.
+Utilice los botones del menú o escriba /help para ver todos los comandos disponibles.
 
 Dashboard web: https://jomucon21muri.github.io/API/
     """
     
+    logger.info(f'Usuario {user.id} ({user.first_name}) inició el bot')
     await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
 

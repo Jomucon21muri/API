@@ -1,10 +1,24 @@
 """
-Modelos de datos para la API Financiera
-Define las estructuras de base de datos usando SQLAlchemy
+Modelos de datos del sistema de gestión financiera.
+
+Este módulo define las estructuras de base de datos utilizando SQLAlchemy ORM.
+Incluye modelos para clientes, transacciones, auditoría, acciones del mercado
+y portafolios de inversión.
+
+Modelos:
+    Customer: Información de clientes del sistema
+    Transaction: Transacciones financieras
+    AuditLog: Registro de auditoría de cambios
+    Stock: Acciones del mercado de valores
+    Portfolio: Posiciones de inversión de clientes
+
+Funciones auxiliares:
+    create_audit_log: Crear registro de auditoría
 """
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from typing import Optional, Dict, Any
 
 db = SQLAlchemy()
 

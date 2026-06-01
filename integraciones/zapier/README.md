@@ -1,13 +1,12 @@
-# Integración Zapier con API Financiera
+# Integración Zapier con sistema de gestión financiera
 
-Este directorio contiene ejemplos de Zaps que se integran con la API Financiera.
+Este directorio contiene ejemplos de Zaps que se integran con la API del sistema de gestión financiera.
 
 ## Zaps disponibles
 
-### 1. Backup diario a Google Drive
-**Archivo**: `zap-backup-diario.txt`
+### 1. Copia de seguridad diaria a Google Drive
 
-**Descripción**: Cada día a las 23:00, obtiene el reporte diario y lo guarda en múltiples destinos.
+**Descripción**: cada día a las 23:00, obtiene el reporte diario y lo guarda en múltiples destinos.
 
 **Trigger**: Schedule by Zapier (Daily 23:00)
 
@@ -18,22 +17,20 @@ Este directorio contiene ejemplos de Zaps que se integran con la API Financiera.
 4. Email - Send notification
 
 ### 2. Notificaciones de transacciones grandes
-**Archivo**: `zap-alertas-grandes.txt`
 
-**Descripción**: Usa webhook para recibir notificaciones en tiempo real de transacciones > $1000.
+**Descripción**: usa webhook para recibir notificaciones en tiempo real de transacciones superiores a 1000 USD.
 
 **Trigger**: Webhooks by Zapier (Catch Hook)
 
 **Actions**:
-1. Filter - Solo > $1000
+1. Filter - Solo transacciones superiores a 1000 USD
 2. Slack - Send message
 3. Email - Send email
 4. Trello - Create card
 
 ### 3. Conciliación bancaria
-**Archivo**: `zap-conciliacion.txt`
 
-**Descripción**: Compara transacciones de la API con extracto bancario.
+**Descripción**: compara transacciones de la API con extracto bancario.
 
 **Trigger**: Gmail - New Attachment (extracto bancario)
 
@@ -46,18 +43,18 @@ Este directorio contiene ejemplos de Zaps que se integran con la API Financiera.
 
 ## Configuración básica
 
-### Paso 1: Crear cuenta en Zapier
+### Paso 1: crear cuenta en Zapier
 
-1. Visita [zapier.com](https://zapier.com)
-2. Regístrate (plan gratuito: 100 tasks/mes)
-3. Verifica tu email
+1. Visitar [zapier.com](https://zapier.com)
+2. Registrarse (plan gratuito: 100 tareas mensuales)
+3. Verificar dirección de correo electrónico
 
-### Paso 2: Crear un Zap
+### Paso 2: crear un Zap
 
-1. Click "Create Zap"
-2. Nombra tu Zap (ej: "Backup Diario Transacciones")
+1. Hacer clic en "Create Zap"
+2. Nombrar el Zap (ejemplo: "Copia de seguridad diaria de transacciones")
 
-### Paso 3: Configurar Trigger
+### Paso 3: configurar Trigger
 
 #### Ejemplo: Schedule Trigger
 
@@ -75,14 +72,14 @@ App: Webhooks by Zapier
 Trigger Event: Catch Hook
 ```
 
-Zapier te dará una URL como:
+Zapier proporcionará una URL como:
 ```
 https://hooks.zapier.com/hooks/catch/123456/abcdef/
 ```
 
-Esta URL la usarás para recibir eventos de tu API.
+Esta URL se utilizará para recibir eventos de la API.
 
-### Paso 4: Configurar Actions
+### Paso 4: configurar Actions
 
 #### Action 1: GET Request a la API
 
@@ -94,9 +91,90 @@ Headers:
   X-API-Key: api_key_demo_12345
 ```
 
-**Test**: Click "Test & Continue" para verificar que funciona
+**Test**: hacer clic en "Test & Continue" para verificar el funcionamiento.
 
-#### Action 2: Guardar en Google Sheets
+#### Action 2: guardar en Google Sheets
+
+```
+App: Google Sheets
+Action Event: Create Spreadsheet Row
+Spreadsheet: [Seleccionar hoja de cálculo]
+Worksheet: [Seleccionar pestaña]
+```
+
+Mapear campos:
+- Fecha: `{{fecha}}`
+- Monto: `{{monto_total}}`
+- Transacciones: `{{num_transacciones}}`
+
+## Características avanzadas
+
+### Filtros y rutas
+
+Los filtros permiten ejecutar acciones solo cuando se cumplen ciertas condiciones:
+
+```
+Filter by Zapier
+Continue only if...
+monto > 1000
+AND
+estado = completed
+```
+
+### Formateo de datos
+
+Formatter by Zapier permite transformar datos:
+- Formatear fechas
+- Convertir divisas
+- Manipular texto
+- Operaciones matemáticas
+
+### Code by Zapier
+
+Para lógica personalizada, usar Python o JavaScript:
+
+```python
+# Ejemplo: calcular total y promedio
+transacciones = input_data['transacciones']
+total = sum(float(tx['monto']) for tx in transacciones)
+promedio = total / len(transacciones)
+
+output = {'total': total, 'promedio': promedio}
+```
+
+## Limitaciones
+
+### Plan gratuito
+- 100 tareas por mes
+- Ejecución cada 15 minutos mínimo
+- 5 Zaps activos
+
+### Plan Starter (desde 19.99 USD/mes)
+- 750 tareas por mes
+- Multi-step Zaps
+- Aplicaciones premium
+
+## Seguridad
+
+### Protección de API Key
+
+No exponer la API Key directamente en URLs. Usar headers:
+
+```
+Headers:
+  X-API-Key: {{api_key}}
+```
+
+### Validación de webhooks
+
+Implementar firma HMAC para validar webhooks entrantes.
+
+## Recursos adicionales
+
+- [Documentación oficial de Zapier](https://zapier.com/help)
+- [Zapier Community](https://community.zapier.com/)
+- [API de referencia del sistema](../../README.md)
+
 
 ```
 App: Google Sheets
@@ -264,7 +342,7 @@ Decimals: 2
 ```
 App: Email by Zapier
 To: urgente@tuempresa.com
-Subject: 🚨 Transacción Grande - {{Step 3 output}}
+Subject: ALERTA - Transacción Grande - {{Step 3 output}}
 Body:
   ALERTA: Transacción grande detectada
   
@@ -510,13 +588,13 @@ Increment By: 1
 
 ### Ejemplo de optimización
 
-❌ **Ineficiente** (30 tasks):
+**Ineficiente** (30 tasks):
 ```
 Trigger (0) → Get 10 transactions (1) → Loop 10 times (10) → 
 Send email cada uno (10) → Update sheet cada uno (10) = 31 tasks
 ```
 
-✅ **Eficiente** (3 tasks):
+**Eficiente** (3 tasks):
 ```
 Trigger (0) → Get transactions (1) → Format summary (1) → 
 Send 1 email (1) = 3 tasks

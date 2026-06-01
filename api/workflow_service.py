@@ -1,28 +1,66 @@
 """
-Servicio para leer workflows de diferentes plataformas de automatización
+Servicio de lectura de flujos de trabajo de automatización.
+
+Este módulo proporciona funcionalidades para leer y analizar workflows
+de diferentes plataformas de automatización (n8n, Make, Zapier).
+
+Clases:
+    WorkflowReader: Lector de workflows de múltiples plataformas
+    
+Funciones:
+    get_workflows_summary: Obtener resumen de todos los workflows
 """
 
 import json
 import os
 from pathlib import Path
+from typing import List, Dict, Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowReader:
-    """Lector de workflows de n8n, Make y Zapier"""
+    """
+    Lector de workflows de plataformas de automatización.
     
-    def __init__(self, base_path):
+    Soporta lectura y análisis de workflows de n8n, Make y Zapier.
+    Para n8n, lee archivos JSON con la definición completa del workflow.
+    Para Make y Zapier, extrae información desde archivos README.
+    
+    Attributes:
+        base_path: Ruta base del proyecto
+        workflows: Diccionario con workflows organizados por plataforma
+    """
+    
+    def __init__(self, base_path: Path):
+        """
+        Inicializa el lector de workflows.
+        
+        Args:
+            base_path: Ruta base del proyecto
+        """
         self.base_path = Path(base_path)
-        self.workflows = {
+        self.workflows: Dict[str, List[Dict[str, Any]]] = {
             'n8n': [],
             'make': [],
             'zapier': []
         }
     
-    def read_n8n_workflows(self):
-        """Leer workflows de n8n desde archivos JSON"""
+    def read_n8n_workflows(self) -> List[Dict[str, Any]]:
+        """
+        Lee workflows de n8n desde archivos JSON.
+        
+        Busca archivos JSON en el directorio integraciones/n8n y extrae
+        información relevante de cada workflow.
+        
+        Returns:
+            List[Dict]: Lista de workflows con su información
+        """
         n8n_path = self.base_path / 'integraciones' / 'n8n'
         
         if not n8n_path.exists():
+            logger.warning(f'Directorio n8n no encontrado: {n8n_path}')
             return []
         
         workflows = []
@@ -31,7 +69,6 @@ class WorkflowReader:
                 with open(json_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     
-                    # Extraer información relevante
                     workflow_info = {
                         'platform': 'n8n',
                         'name': data.get('name', json_file.stem),
@@ -39,21 +76,32 @@ class WorkflowReader:
                         'nodes': len(data.get('nodes', [])),
                         'connections': len(data.get('connections', {})),
                         'triggers': self._count_triggers(data),
-                        'description': self._extract_description(data)
+                        'description': self._extract_description(data),
+                        'active': data.get('active', False)
                     }
                     
                     workflows.append(workflow_info)
+                    logger.info(f'Workflow n8n cargado: {workflow_info["name"]}')
+                    
+            except json.JSONDecodeError as e:
+                logger.error(f'Error al parsear JSON de {json_file}: {e}')
             except Exception as e:
-                print(f"Error leyendo {json_file}: {e}")
+                logger.error(f'Error leyendo {json_file}: {e}')
         
         return workflows
     
-    def read_make_workflows(self):
-        """Leer información de workflows de Make desde README"""
+    def read_make_workflows(self) -> List[Dict[str, Any]]:
+        """
+        Lee información de workflows de Make desde README.
+        
+        Returns:
+            List[Dict]: Lista con información de workflows de Make
+        """
         make_path = self.base_path / 'integraciones' / 'make'
         readme_path = make_path / 'README.md'
         
         if not readme_path.exists():
+            logger.warning(f'README de Make no encontrado: {readme_path}')
             return []
         
         workflows = []
@@ -61,28 +109,34 @@ class WorkflowReader:
             with open(readme_path, 'r', encoding='utf-8') as f:
                 content = f.read()
                 
-                # Buscar información de workflows
-                # Esto es básico, se puede mejorar con regex
-                if 'workflow' in content.lower():
+                if 'workflow' in content.lower() or 'scenario' in content.lower():
                     workflow_info = {
                         'platform': 'make',
-                        'name': 'Make Integration',
+                        'name': 'Integración Make',
                         'file': 'README.md',
-                        'description': 'Ver README para más detalles',
+                        'description': 'Consultar README para detalles de configuración',
                         'status': 'Documentado'
                     }
                     workflows.append(workflow_info)
+                    logger.info('Integración de Make documentada')
+                    
         except Exception as e:
-            print(f"Error leyendo Make README: {e}")
+            logger.error(f'Error leyendo Make README: {e}')
         
         return workflows
     
-    def read_zapier_workflows(self):
-        """Leer información de workflows de Zapier desde README"""
+    def read_zapier_workflows(self) -> List[Dict[str, Any]]:
+        """
+        Lee información de workflows de Zapier desde README.
+        
+        Returns:
+            List[Dict]: Lista con información de workflows de Zapier
+        """
         zapier_path = self.base_path / 'integraciones' / 'zapier'
         readme_path = zapier_path / 'README.md'
         
         if not readme_path.exists():
+            logger.warning(f'README de Zapier no encontrado: {readme_path}')
             return []
         
         workflows = []
@@ -93,40 +147,57 @@ class WorkflowReader:
                 if 'workflow' in content.lower() or 'zap' in content.lower():
                     workflow_info = {
                         'platform': 'zapier',
-                        'name': 'Zapier Integration',
+                        'name': 'Integración Zapier',
                         'file': 'README.md',
-                        'description': 'Ver README para más detalles',
+                        'description': 'Consultar README para detalles de configuración',
                         'status': 'Documentado'
                     }
                     workflows.append(workflow_info)
+                    logger.info('Integración de Zapier documentada')
+                    
         except Exception as e:
-            print(f"Error leyendo Zapier README: {e}")
+            logger.error(f'Error leyendo Zapier README: {e}')
         
         return workflows
     
-    def get_all_workflows(self):
-        """Obtener todos los workflows de todas las plataformas"""
+    def get_all_workflows(self) -> List[Dict[str, Any]]:
+        """
+        Obtiene todos los workflows de todas las plataformas.
+        
+        Returns:
+            List[Dict]: Lista consolidada de todos los workflows
+        """
         all_workflows = []
         
-        # n8n
+        # Leer workflows de n8n
         n8n_workflows = self.read_n8n_workflows()
         all_workflows.extend(n8n_workflows)
         self.workflows['n8n'] = n8n_workflows
         
-        # Make
+        # Leer workflows de Make
         make_workflows = self.read_make_workflows()
         all_workflows.extend(make_workflows)
         self.workflows['make'] = make_workflows
         
-        # Zapier
+        # Leer workflows de Zapier
         zapier_workflows = self.read_zapier_workflows()
         all_workflows.extend(zapier_workflows)
         self.workflows['zapier'] = zapier_workflows
         
+        logger.info(f'Total de workflows cargados: {len(all_workflows)}')
+        
         return all_workflows
     
-    def _count_triggers(self, workflow_data):
-        """Contar triggers en un workflow de n8n"""
+    def _count_triggers(self, workflow_data: Dict[str, Any]) -> int:
+        """
+        Cuenta los triggers en un workflow de n8n.
+        
+        Args:
+            workflow_data: Datos del workflow en formato JSON
+            
+        Returns:
+            int: Número de triggers encontrados
+        """
         count = 0
         for node in workflow_data.get('nodes', []):
             node_type = node.get('type', '')
@@ -134,32 +205,37 @@ class WorkflowReader:
                 count += 1
         return count
     
-    def _extract_description(self, workflow_data):
-        """Extraer descripción del workflow"""
-        # Buscar en nodes que puedan tener descripción
-        for node in workflow_data.get('nodes', []):
-            if node.get('name') == 'Schedule Trigger':
-                return f"Ejecuta cada {self._get_schedule_interval(node)}"
+    def _extract_description(self, workflow_data: Dict[str, Any]) -> str:
+        """
+        Extrae descripción del workflow.
         
-        return f"{len(workflow_data.get('nodes', []))} nodos, {self._count_triggers(workflow_data)} triggers"
+        Args:
+            workflow_data: Datos del workflow en formato JSON
+            
+        Returns:
+            str: Descripción del workflow
+        """
+        # Buscar descripción explícita
+        if 'description' in workflow_data:
+            return workflow_data['description']
+        
+        # Generar descripción basada en estructura
+        num_nodes = len(workflow_data.get('nodes', []))
+        num_triggers = self._count_triggers(workflow_data)
+        
+        return f'{num_nodes} nodos, {num_triggers} triggers'
+
+
+def get_workflows_summary(base_path: Path) -> Dict[str, Any]:
+    """
+    Obtiene resumen de todos los workflows.
     
-    def _get_schedule_interval(self, node):
-        """Obtener intervalo de ejecución de un trigger programado"""
-        try:
-            params = node.get('parameters', {})
-            rule = params.get('rule', {})
-            interval = rule.get('interval', [{}])[0]
-            
-            field = interval.get('field', '')
-            value = interval.get(f'{field}Interval', 1)
-            
-            return f"{value} {field}"
-        except:
-            return "intervalo configurado"
-
-
-def get_workflows_summary(base_path):
-    """Obtener resumen de todos los workflows"""
+    Args:
+        base_path: Ruta base del proyecto
+        
+    Returns:
+        Dict: Resumen con totales por plataforma y lista de workflows
+    """
     reader = WorkflowReader(base_path)
     workflows = reader.get_all_workflows()
     
@@ -174,30 +250,6 @@ def get_workflows_summary(base_path):
     }
     
     return summary
-
-
-if __name__ == '__main__':
-    # Probar el lector
-    import sys
-    
-    # Ruta base del proyecto
-    base_path = Path(__file__).parent.parent
-    
-    print("Leyendo workflows...")
-    print(f"Ruta base: {base_path}")
-    
-    reader = WorkflowReader(base_path)
-    workflows = reader.get_all_workflows()
-    
-    print(f"\nTotal de workflows encontrados: {len(workflows)}")
-    print(f"  - n8n: {len(reader.workflows['n8n'])}")
-    print(f"  - Make: {len(reader.workflows['make'])}")
-    print(f"  - Zapier: {len(reader.workflows['zapier'])}")
-    
-    print("\nDetalles:")
-    for wf in workflows:
-        print(f"\n{wf['platform'].upper()}: {wf['name']}")
-        print(f"  Archivo: {wf['file']}")
         if 'nodes' in wf:
             print(f"  Nodos: {wf['nodes']}")
             print(f"  Triggers: {wf['triggers']}")
